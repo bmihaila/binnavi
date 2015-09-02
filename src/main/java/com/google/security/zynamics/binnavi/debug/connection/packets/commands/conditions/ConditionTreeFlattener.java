@@ -15,6 +15,11 @@ limitations under the License.
 */
 package com.google.security.zynamics.binnavi.debug.connection.packets.commands.conditions;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.ConditionNode;
 import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.ConditionNodeSwitcher;
 import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.ConditionNodeSwitcher.NodeSwitcher;
 import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.ExpressionNode;
@@ -24,12 +29,7 @@ import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.
 import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.NumberNode;
 import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.RelationNode;
 import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.SubNode;
-import com.google.security.zynamics.binnavi.debug.models.breakpoints.conditions.ConditionNode;
 import com.google.security.zynamics.zylib.general.ByteHelpers;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Class that flattens a breakpoint condition tree into a byte array.
@@ -184,8 +184,11 @@ public final class ConditionTreeFlattener {
    * @return The flattened identifier of the node.
    */
   private static byte[] getType(final ConditionNode node) {
+    // NOTE: casting int to long will perform sign extension which might introduce extra bits
+    // when encoded as a byte array and decoded again. However, here only a dword is required
+    // which discards the sign extended part of long anyways. So the cast is safe.
     return ByteHelpers.toBigEndianDword(
-        ConditionNodeSwitcher.process(node, new NodeSwitcher<Integer>() {
+        (long) ConditionNodeSwitcher.process(node, new NodeSwitcher<Integer>() {
           @Override
           public Integer process(final ExpressionNode node) {
             return ID_EXPRESSION_NODE;
